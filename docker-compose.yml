@@ -146,6 +146,47 @@ services:
     depends_on:
       - postgres
 
+  supabase-db:
+    image: supabase/postgres:15.1.0.140
+    container_name: supabase-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - supabase_db_data:/var/lib/postgresql/data
+    ports:
+      - "54321:5432"
+    networks:
+      - infra-network
+
+  supabase-auth:
+    image: supabase/gotrue:latest
+    container_name: supabase-auth
+    restart: unless-stopped
+    environment:
+      GOTRUE_SITE_URL: http://supabase.optimia.io
+      GOTRUE_JWT_SECRET: your_jwt_secret
+      GOTRUE_DB_DRIVER: postgres
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+    depends_on:
+      - supabase-db
+    networks:
+      - infra-network
+
+  supabase-rest:
+    image: postgrest/postgrest:latest
+    container_name: supabase-rest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your_jwt_secret
+    depends_on:
+      - supabase-db
+    networks:
+      - infra-network
+
+
   docuseal:
     image: docuseal/docuseal:latest
     container_name: docuseal
@@ -181,6 +222,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+      
     networks:
       - infra-network
     depends_on:
@@ -203,6 +245,7 @@ volumes:
   docuseal_data:
   caddy_data:
   caddy_config:
+  supabase_db_data:
 
 networks:
   infra-network:
