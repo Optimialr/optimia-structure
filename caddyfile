@@ -51,21 +51,6 @@ qdrant.optimia.io {
     }
 }
 
-# Supabase
-supabase.optimia.io {
-    reverse_proxy supabase-kong:8000
-    
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options SAMEORIGIN
-    }
-    
-    log {
-        output file /var/log/caddy/supabase-access.log
-        format json
-    }
-}
-
 # Baserow
 baserow.optimia.io {
     reverse_proxy baserow:80

@@ -128,64 +128,7 @@ services:
     networks:
       - infra-network
 
-  supabase-kong:
-    image: kong:2.8.1
-    container_name: supabase-kong
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-      - "8443:8443"
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
-      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
-    volumes:
-      - ./supabase/kong.yml:/var/lib/kong/kong.yml:ro
-    networks:
-      - infra-network
-    depends_on:
-      - postgres
-
-  supabase-db:
-    image: supabase/postgres:15.1.0.140
-    container_name: supabase-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - supabase_db_data:/var/lib/postgresql/data
-    ports:
-      - "54321:5432"
-    networks:
-      - infra-network
-
-  supabase-auth:
-    image: supabase/gotrue:latest
-    container_name: supabase-auth
-    restart: unless-stopped
-    environment:
-      GOTRUE_SITE_URL: http://supabase.optimia.io
-      GOTRUE_JWT_SECRET: your_jwt_secret
-      GOTRUE_DB_DRIVER: postgres
-      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
-    depends_on:
-      - supabase-db
-    networks:
-      - infra-network
-
-  supabase-rest:
-    image: postgrest/postgrest:latest
-    container_name: supabase-rest
-    restart: unless-stopped
-    environment:
-      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
-      PGRST_DB_ANON_ROLE: anon
-      PGRST_JWT_SECRET: your_jwt_secret
-    depends_on:
-      - supabase-db
-    networks:
-      - infra-network
-
+  # Supabase supprimé
 
   docuseal:
     image: docuseal/docuseal:latest
@@ -214,7 +157,7 @@ services:
       N8N_HOSTNAME: ${N8N_HOSTNAME:-n8n.optimia.io}
       N8N_TEST_HOSTNAME: ${N8N_TEST_HOSTNAME:-n8n-test.optimia.io}
       QDRANT_HOSTNAME: ${QDRANT_HOSTNAME:-qdrant.optimia.io}
-      SUPABASE_HOSTNAME: ${SUPABASE_HOSTNAME:-supabase.optimia.io}
+      # SUPABASE_HOSTNAME supprimé
       BASEROW_HOSTNAME: ${BASEROW_HOSTNAME:-baserow.optimia.io}
       OLLAMA_HOSTNAME: ${OLLAMA_HOSTNAME:-ollama.optimia.io}
       DOCUSEAL_HOSTNAME: ${DOCUSEAL_HOSTNAME:-docuseal.optimia.io}
@@ -230,7 +173,7 @@ services:
       - n8n-test
       - qdrant
       - ollama
-      - supabase-kong
+      # supabase-kong supprimé
       - baserow
       - docuseal
 
