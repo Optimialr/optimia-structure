@@ -15,6 +15,11 @@ services:
       - "5432:5432"
     networks:
       - infra-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   n8n:
     image: n8nio/n8n:latest
@@ -27,13 +32,44 @@ services:
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-postgres}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_POSTGRESDB_DATABASE=n8n
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
       - OLLAMA_HOST=ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT__SERVICE__API_KEY}
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./shared:/data/shared
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - infra-network
+
+  n8n-test:
+    image: n8nio/n8n:latest
+    container_name: n8n-test
+    restart: unless-stopped
+    ports:
+      - "5679:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-postgres}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_POSTGRESDB_DATABASE=n8n_test
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - OLLAMA_HOST=ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT__SERVICE__API_KEY}
+    volumes:
+      - n8n_test_data:/home/node/.n8n
+      - ./shared:/data/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - infra-network
 
@@ -43,6 +79,8 @@ services:
     restart: unless-stopped
     ports:
       - "6333:6333"
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT__SERVICE__API_KEY}
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
@@ -66,12 +104,16 @@ services:
     ports:
       - "8080:80"
     environment:
-      BASEROW_PUBLIC_URL: http://localhost:8080
+      BASEROW_PUBLIC_URL: ${BASEROW_HOSTNAME:-http://localhost:8080}
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/baserow
+      REDIS_URL: redis://redis:6379
     volumes:
       - baserow_data:/baserow/data
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - infra-network
 
@@ -86,14 +128,83 @@ services:
     networks:
       - infra-network
 
+  supabase-kong:
+    image: kong:2.8.1
+    container_name: supabase-kong
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+    volumes:
+      - ./supabase/kong.yml:/var/lib/kong/kong.yml:ro
+    networks:
+      - infra-network
+    depends_on:
+      - postgres
+
+  docuseal:
+    image: docuseal/docuseal:latest
+    container_name: docuseal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/docuseal
+    volumes:
+      - docuseal_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - infra-network
+
+  caddy:
+    image: caddy:2.7-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      N8N_HOSTNAME: ${N8N_HOSTNAME:-n8n.optimia.io}
+      N8N_TEST_HOSTNAME: ${N8N_TEST_HOSTNAME:-n8n-test.optimia.io}
+      QDRANT_HOSTNAME: ${QDRANT_HOSTNAME:-qdrant.optimia.io}
+      SUPABASE_HOSTNAME: ${SUPABASE_HOSTNAME:-supabase.optimia.io}
+      BASEROW_HOSTNAME: ${BASEROW_HOSTNAME:-baserow.optimia.io}
+      OLLAMA_HOSTNAME: ${OLLAMA_HOSTNAME:-ollama.optimia.io}
+      DOCUSEAL_HOSTNAME: ${DOCUSEAL_HOSTNAME:-docuseal.optimia.io}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - infra-network
+    depends_on:
+      - n8n
+      - n8n-test
+      - qdrant
+      - ollama
+      - supabase-kong
+      - baserow
+      - docuseal
+
 volumes:
   postgres_data:
   n8n_data:
+  n8n_test_data:
   qdrant_data:
   ollama_data:
   baserow_data:
   redis_data:
+  docuseal_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   infra-network:
     driver: bridge
+    name: infra-network

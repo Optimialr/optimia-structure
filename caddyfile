@@ -1,0 +1,110 @@
+# Caddyfile pour optimia.io
+# HTTPS automatique avec Let's Encrypt
+
+# n8n Production
+n8n.optimia.io {
+    reverse_proxy n8n:5678
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        X-XSS-Protection "1; mode=block"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+    
+    log {
+        output file /var/log/caddy/n8n-access.log
+        format json
+    }
+}
+
+# n8n Test
+n8n-test.optimia.io {
+    reverse_proxy n8n-test:5678
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        X-XSS-Protection "1; mode=block"
+    }
+    
+    log {
+        output file /var/log/caddy/n8n-test-access.log
+        format json
+    }
+}
+
+# Qdrant
+qdrant.optimia.io {
+    reverse_proxy qdrant:6333
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+    }
+    
+    log {
+        output file /var/log/caddy/qdrant-access.log
+        format json
+    }
+}
+
+# Supabase
+supabase.optimia.io {
+    reverse_proxy supabase-kong:8000
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+    }
+    
+    log {
+        output file /var/log/caddy/supabase-access.log
+        format json
+    }
+}
+
+# Baserow
+baserow.optimia.io {
+    reverse_proxy baserow:80
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+    }
+    
+    log {
+        output file /var/log/caddy/baserow-access.log
+        format json
+    }
+}
+
+# Ollama
+ollama.optimia.io {
+    reverse_proxy ollama:11434
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+    }
+    
+    log {
+        output file /var/log/caddy/ollama-access.log
+        format json
+    }
+}
+
+# DocuSeal
+docuseal.optimia.io {
+    reverse_proxy docuseal:3000
+    
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+    }
+    
+    log {
+        output file /var/log/caddy/docuseal-access.log
+        format json
+    }
+}
