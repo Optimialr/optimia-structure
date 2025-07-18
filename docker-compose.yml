@@ -11,8 +11,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
-      - ai-network
+      - infra-network
 
   n8n:
     image: n8nio/n8n:latest
@@ -27,12 +29,13 @@ services:
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - OLLAMA_HOST=ollama:11434
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:
       - postgres
     networks:
-      - ai-network
+      - infra-network
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -43,7 +46,7 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
-      - ai-network
+      - infra-network
 
   ollama:
     image: ollama/ollama:latest
@@ -54,14 +57,43 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     networks:
-      - ai-network
+      - infra-network
+
+  baserow:
+    image: baserow/baserow:1.22.1
+    container_name: baserow
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      BASEROW_PUBLIC_URL: http://localhost:8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/baserow
+    volumes:
+      - baserow_data:/baserow/data
+    depends_on:
+      - postgres
+    networks:
+      - infra-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - infra-network
 
 volumes:
   postgres_data:
   n8n_data:
   qdrant_data:
   ollama_data:
+  baserow_data:
+  redis_data:
 
 networks:
-  ai-network:
+  infra-network:
     driver: bridge
