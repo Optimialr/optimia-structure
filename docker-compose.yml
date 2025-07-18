@@ -245,7 +245,6 @@ volumes:
   docuseal_data:
   caddy_data:
   caddy_config:
-  supabase_db_data:
 
 networks:
   infra-network:
