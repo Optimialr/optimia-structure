@@ -4,14 +4,14 @@ import subprocess
 import sys
 
 def main():
-    print("íº€ DÃ©marrage Infrastructure IA")
+    print("ğŸš€ DÃ©marrage Infrastructure IA")
     try:
         subprocess.run(["docker", "compose", "up", "-d"], check=True)
-        print("âœ… Services dÃ©marrÃ©s!")
-        print("ï¿½ï¿½ n8n: http://localhost:5678")
-        print("í´ Qdrant: http://localhost:6333") 
-        print("í´– Ollama: http://localhost:11434")
-        print("í³‹ Baserow: http://localhost:8080")
+        print("âœ… Services dÃ©marrÃ©s !")
+        print("ğŸŒ n8n: http://localhost:5678")
+        print("ğŸ¤– Ollama: http://localhost:11434")
+        print("ğŸ§© Baserow: http://localhost:8080")
+        print("ğŸ“„ DocuSeal: http://localhost:3000")
     except Exception as e:
         print(f"âŒ Erreur: {e}")
         sys.exit(1)

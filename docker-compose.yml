@@ -36,8 +36,6 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
       - OLLAMA_HOST=ollama:11434
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_API_KEY=${QDRANT__SERVICE__API_KEY}
     volumes:
       - n8n_data:/home/node/.n8n
       - ./shared:/data/shared
@@ -62,27 +60,12 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
       - OLLAMA_HOST=ollama:11434
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_API_KEY=${QDRANT__SERVICE__API_KEY}
     volumes:
       - n8n_test_data:/home/node/.n8n
       - ./shared:/data/shared
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - infra-network
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-    environment:
-      QDRANT__SERVICE__API_KEY: ${QDRANT__SERVICE__API_KEY}
-    volumes:
-      - qdrant_data:/qdrant/storage
     networks:
       - infra-network
 
@@ -154,7 +137,6 @@ services:
     environment:
       N8N_HOSTNAME: ${N8N_HOSTNAME:-n8n.optimia.io}
       N8N_TEST_HOSTNAME: ${N8N_TEST_HOSTNAME:-n8n-test.optimia.io}
-      QDRANT_HOSTNAME: ${QDRANT_HOSTNAME:-qdrant.optimia.io}
       BASEROW_HOSTNAME: ${BASEROW_HOSTNAME:-baserow.optimia.io}
       OLLAMA_HOSTNAME: ${OLLAMA_HOSTNAME:-ollama.optimia.io}
       DOCUSEAL_HOSTNAME: ${DOCUSEAL_HOSTNAME:-docuseal.optimia.io}
@@ -163,21 +145,19 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - ./caddy_logs:/var/log/caddy
-    networks:
-      - infra-network
     depends_on:
       - n8n
       - n8n-test
-      - qdrant
       - ollama
       - baserow
       - docuseal
+    networks:
+      - infra-network
 
 volumes:
   postgres_data:
   n8n_data:
   n8n_test_data:
-  qdrant_data:
   ollama_data:
   baserow_data:
   redis_data:
@@ -188,4 +168,3 @@ volumes:
 networks:
   infra-network:
     driver: bridge
-    name: infra-network
