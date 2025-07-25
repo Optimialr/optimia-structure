@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 
 services:
   postgres:
@@ -128,8 +128,6 @@ services:
     networks:
       - infra-network
 
-  # Supabase supprimé
-
   docuseal:
     image: docuseal/docuseal:latest
     container_name: docuseal
@@ -157,7 +155,6 @@ services:
       N8N_HOSTNAME: ${N8N_HOSTNAME:-n8n.optimia.io}
       N8N_TEST_HOSTNAME: ${N8N_TEST_HOSTNAME:-n8n-test.optimia.io}
       QDRANT_HOSTNAME: ${QDRANT_HOSTNAME:-qdrant.optimia.io}
-      # SUPABASE_HOSTNAME supprimé
       BASEROW_HOSTNAME: ${BASEROW_HOSTNAME:-baserow.optimia.io}
       OLLAMA_HOSTNAME: ${OLLAMA_HOSTNAME:-ollama.optimia.io}
       DOCUSEAL_HOSTNAME: ${DOCUSEAL_HOSTNAME:-docuseal.optimia.io}
@@ -165,7 +162,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-      
+      - ./caddy_logs:/var/log/caddy
     networks:
       - infra-network
     depends_on:
@@ -173,7 +170,6 @@ services:
       - n8n-test
       - qdrant
       - ollama
-      # supabase-kong supprimé
       - baserow
       - docuseal
 
